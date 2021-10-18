@@ -6,92 +6,74 @@ sys.path.append('.')
 import os
 import pandas as pd
 from flnode.pipeline.opener import Opener
-import PIL
+import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 class MonaiOpener(Opener):
-    def __init__(self, data_dir, num_class=0):
-        self.data_dir = data_dir
-        self.num_class = num_class
-        self.class_names = None
+    def __init__(self, data_dir):
+        self.data_dir = Path(data_dir)
+        self.image_dir = self.data_dir / 'images'
+        self.label_dir = self.data_dir / 'labels'
+
+
+    def get_image_and_label_list(self):
+        # assumes image and label pairs are stored with identical filnames in data_dir/images and data_dir/labels
+        image_files = list(self.image_dir.glob('*.nii*'))
+        self.image_and_label_files = []
+        self.num_unpaired = 0
+        for im in image_files:
+            label_file = self.label_dir / im.name
+            if label_file.exists():
+                self.image_and_label_files.append(
+                    {'img': str(im),
+                     'seg': str(label_file)})
+            else:
+                self.num_unpaired += 1
+        self.num_total = len(self.image_and_label_files)
 
     def data_summary(self, folders):
-        self.class_names = folders
-        self.num_class = len(self.class_names)
+        if not hasattr(self, 'image_and_label_files'):
+            self.get_image_and_label_list()
 
-        image_files = [
-            [
-                os.path.join(self.data_dir, self.class_names[i], x)
-                for x in os.listdir(os.path.join(self.data_dir, self.class_names[i]))
-            ]
-            for i in range(self.num_class)
-        ]
-        num_each = [len(image_files[i]) for i in range(self.num_class)]
-        image_files_list = []
-        image_class = []
-        for i in range(self.num_class):
-            image_files_list.extend(image_files[i])
-            image_class.extend([i] * num_each[i])
-        num_total = len(image_class)
-        image_width, image_height = PIL.Image.open(image_files_list[0]).size
+        # get size of each image
+        image_sizes = [nib.load(f['img']).shape for f in self.image_and_label_files]
 
-        print(f"Total image count: {num_total}")
-        print(f"Image dimensions: {image_width} x {image_height}")
-        print(f"Label names: {self.class_names}")
-        print(f"Label counts: {num_each}")
 
-        # plt.subplots(3, 3, figsize=(8, 8))
-        # for i, k in enumerate(np.random.randint(num_total, size=9)):
-        #     im = PIL.Image.open(image_files_list[k])
-        #     arr = np.array(im)
-        #     plt.subplot(3, 3, i + 1)
-        #     plt.xlabel(self.class_names[image_class[k]])
-        #     plt.imshow(arr, cmap="gray", vmin=0, vmax=255)
+        print(f"Total paired image  and labels: {self.num_total}")
+        print(f"Total images with no label found: {self.num_unpaired}")
+        mean_size = np.array(image_sizes).mean(axis=0).astype(np.int16)
+        print(f"Mean image size: {mean_size}\n")
+
+        # # uncomment to take a quick peek at the data
+        # num_to_plot=4
+        # plt.subplots(2, num_to_plot, figsize=(8, 8))
+        # for i, k in enumerate(np.random.randint(num_total, size=num_to_plot)):
+        #     im = nib.load(self.image_and_label_files[k]['img']).get_fdata()
+        #     seg = nib.load(self.image_and_label_files[k]['seg']).get_fdata()
+        #     plt.subplot(2, num_to_plot, i +1 )
+        #     if im.ndim == 3:
+        #         data_slice = np.s_[:,:,im.shape[2]//2]
+        #     elif im.ndim == 4:
+        #         data_slice = np.s_[:,:,im.shape[2]//2, 0]
+        #     plt.imshow(im[data_slice], cmap="gray", vmin=-15, vmax=100)
+        #     plt.subplot(2, num_to_plot, i + num_to_plot + 1 )
+        #     plt.imshow(seg[data_slice], cmap="gray")
         # plt.tight_layout()
         # plt.show()
 
     def get_x_y(self, folders, frac_val, frac_test):
-        train_x = list()
-        train_y = list()
-        val_x = list()
-        val_y = list()
-        test_x = list()
-        test_y = list()
-        
-        self.class_names = folders
-        self.num_class = len(self.class_names)
-        #print("Root Directory (dataset): " + self.data_dir)
-        
-        image_files = [
-            [
-                os.path.join(self.data_dir, self.class_names[i], x)
-                for x in os.listdir(os.path.join(self.data_dir, self.class_names[i]))
-            ]
-            for i in range(self.num_class)
-        ]
-        num_each = [len(image_files[i]) for i in range(self.num_class)]
-        image_files_list = []
-        image_class = []
-        for i in range(self.num_class):
-            image_files_list.extend(image_files[i])
-            image_class.extend([i] * num_each[i])
-        num_total = len(image_class)
+        if not hasattr(self, 'image_and_label_files'):
+            self.get_image_and_label_list()
 
-        for i in range(num_total):
-            rann = np.random.random()
-            if rann < frac_val:
-                val_x.append(image_files_list[i])
-                val_y.append(image_class[i])
-            elif rann < (frac_val+frac_test):
-                test_x.append(image_files_list[i])
-                test_y.append(image_class[i])
-            else:
-                train_x.append(image_files_list[i])
-                train_y.append(image_class[i])
-        return (train_x, train_y, val_x, val_y, test_x, test_y)
+        random_state = 0
+        train, val_and_test = train_test_split(self.image_and_label_files, train_size=1 - frac_val - frac_test, random_state=random_state)
+        val, test = train_test_split(val_and_test, train_size=frac_val/ (frac_val+frac_test), random_state=random_state)
+
+        return (train, val, test)
 
     def save_predictions(self, y_pred, path):
         with open(path, 'w') as fp:
