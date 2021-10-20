@@ -35,7 +35,7 @@ class MonaiOpener(Opener):
                 self.num_unpaired += 1
         self.num_total = len(self.image_and_label_files)
 
-    def data_summary(self, folders):
+    def data_summary(self):
         if not hasattr(self, 'image_and_label_files'):
             self.get_image_and_label_list()
 
@@ -65,12 +65,16 @@ class MonaiOpener(Opener):
         # plt.tight_layout()
         # plt.show()
 
-    def get_x_y(self, folders, frac_val, frac_test):
+    def get_x_y(self, frac_val, frac_test, frac_initial_dataset):
         if not hasattr(self, 'image_and_label_files'):
             self.get_image_and_label_list()
 
         random_state = 0
-        train, val_and_test = train_test_split(self.image_and_label_files, train_size=1 - frac_val - frac_test, random_state=random_state)
+        if frac_initial_dataset != 1:
+            dataset, _ = train_test_split(self.image_and_label_files, train_size=float(frac_initial_dataset), random_state=random_state)
+        else: 
+            dataset = self.image_and_label_files
+        train, val_and_test = train_test_split(dataset, train_size=1 - frac_val - frac_test, random_state=random_state)
         val, test = train_test_split(val_and_test, train_size=frac_val/ (frac_val+frac_test), random_state=random_state)
 
         return (train, val, test)
@@ -101,15 +105,3 @@ class MonaiOpener(Opener):
             # pd.read_csv(folders)#os.path.join(folders, 'y.csv'))
             # for folder in folders
         ]
-
-class MedNISTDataset(torch.utils.data.Dataset):
-    def __init__(self, image_files, labels, transforms):
-        self.image_files = image_files
-        self.labels = labels
-        self.transforms = transforms
-
-    def __len__(self):
-        return len(self.image_files)
-
-    def __getitem__(self, index):
-        return self.transforms(self.image_files[index]), self.labels[index]

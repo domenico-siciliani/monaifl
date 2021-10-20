@@ -12,9 +12,8 @@ from monai.data import Dataset, DataLoader
 from monai.metrics import compute_meandice
 
 from torch import nn, sigmoid, cuda
-from flnode.pipeline.monaiopener import MonaiOpener, MedNISTDataset
+from flnode.pipeline.monaiopener import MonaiOpener
 from flnode.pipeline.monaialgo import MonaiAlgo
-from common.utils import Mapping
 
 import numpy as np
 from pathlib import Path
@@ -30,10 +29,10 @@ else:
     DEVICE = "cpu"
 
 
-def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, dataset_name='MedicalDecathlon1'):
+def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, dataset_name='CROMIS4AD_READY'):  # /home/dsiciliani/Documents/Projects/ANS001/FLIP/monaifl/data_provider/FLIP/CROMIS4AD_READY
     cwd = Path.cwd()
     datasetName = dataset_name
-    data_path = '../data_provider/dummy_data/'
+    data_path = cwd.parent / 'data_provider'/ 'FLIP'
     data_dir = os.path.join(data_path, datasetName)
     folders = os.listdir(data_dir)
 
@@ -41,9 +40,9 @@ def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, dataset_name='MedicalDecat
     logger.info("----------------------------")
     logger.info("Dataset Summary")
     print("----------------------------")
-    mo.data_summary(folders)
+    mo.data_summary()
 
-    train, val, test = mo.get_x_y(folders, frac_val, frac_test)
+    train, val, test = mo.get_x_y(frac_val, frac_test, frac_initial_dataset)
     logger.info(f"Training count: {len(train)}, Validation count: {len(val)}, Test count: {len(test)}")
 
     train_transforms = Compose(

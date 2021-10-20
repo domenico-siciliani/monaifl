@@ -30,7 +30,7 @@ trunkModelFile = os.path.join(trunkmodelpath, modelName)
 
 w_loc = []
 request_data = Mapping()
-ma = instantiateMonaiAlgo(0.2, 0.2, 'MedicalDecathlon1')
+ma = instantiateMonaiAlgo(0.2, 0.2, frac_initial_dataset=0.02, dataset_name='CROMIS4AD_READY')
 
 class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def __init__(self, stop_event):
