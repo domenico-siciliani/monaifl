@@ -1,4 +1,3 @@
-import os
 import sys
 
 sys.path.append('.')
@@ -33,8 +32,7 @@ def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, da
     cwd = Path.cwd()
     datasetName = dataset_name
     data_path = cwd.parent / 'data_provider'/ 'FLIP'
-    data_dir = os.path.join(data_path, datasetName)
-    folders = os.listdir(data_dir)
+    data_dir = data_path / datasetName
 
     mo = MonaiOpener(data_dir)
     logger.info("----------------------------")
