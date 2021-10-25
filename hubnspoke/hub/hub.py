@@ -15,6 +15,7 @@ import os
 import copy
 import logging
 from coordinator import FedAvg
+import json
 
 class Stage():
     FEDERATION_INITIALIZATION_STARTED = 'FEDERATION_INITIALIZATION_STARTED'
@@ -57,6 +58,8 @@ class Client():
         self.optimizer = None
         self.modelFile = os.path.join(modelpath, modelName)
         self.loc_weights = None
+        reportName = self.name.replace(' ','') + '.json'
+        self.reportFile = os.path.join(modelpath, reportName)
     
 
     def bootstrap(self):
@@ -163,18 +166,23 @@ class Client():
 
         if self.status() == "alive":
             checkpoint = self.gather()
+            result_file_dict = dict()
             for k in checkpoint.keys():
                 if k == "epoch":
-                    #epochs = checkpoint['epoch']
-                    logger.info(f"node's best epoch: {checkpoint['epoch']}") 
+                    logger.info(f"local epochs: {checkpoint[k]}") 
+                    result_file_dict[k] = checkpoint[k]
                 elif k == "weights":
                     w = checkpoint['weights']
                     logger.info("copying weights...")
                     w_loc.append(copy.deepcopy(w))
                     logger.info("aggregating weights...")
                     w_glob = FedAvg(w_loc)
-                elif k == "metric":
-                    logger.info(f"node's best metric: {checkpoint['metric']}" )
+                elif k == "val_mean_dice_scores":
+                    logger.info(f"validation mean dice scores: {checkpoint[k]}" )
+                    result_file_dict[k] = checkpoint[k]
+                elif k == "train_loss_values":
+                    logger.info(f"training loss values: {checkpoint[k]}" )
+                    result_file_dict[k] = checkpoint[k]
                 else:
                     logger.info(f"unknown data received from the node (unexpected key found: {k})")
             cpt = {#'epoch': 1, # to be determined
@@ -182,6 +190,11 @@ class Client():
                 #'metric': 0 # to be aggregated
                 }
             t.save(cpt, modelFile)
+
+            print(result_file_dict)
+            logger.info(f"writing training results in {self.reportFile}...")
+            with open(self.reportFile, 'w') as f:
+                json.dump(result_file_dict, f)
 
             logger_extra['status'] = Stage.AGGREGATION_COMPLETED
             logger.info("aggregation completed")
@@ -203,15 +216,17 @@ class Client():
             fl_request = ParamsRequest(para_request=buffer.getvalue())
             fl_response = client.ReportTransfer(fl_request)
 
-            logger.info("test report received")
+            logger.info("test results received")
             response_bytes = BytesIO(fl_response.para_response)    
             response_data = t.load(response_bytes, map_location='cpu')
+            
 
-            reportName = self.name.replace(' ','') + '.txt'
-            reportFile = os.path.join(modelpath, reportName)
-            logger.info(f"writing the test report in {reportFile}...")
-            with open(reportFile, 'w') as f:
-                f.write(response_data)
+            logger.info(f"writing test results in {self.reportFile}...")
+            with open(self.reportFile, 'r+') as f:
+                result_file_dict = json.load(f)
+                result_file_dict['test_dice_scores'] = response_data['test_dice_scores']
+                f.seek(0)
+                json.dump(result_file_dict, f, indent = 4)
 
             logger_extra['status'] = Stage.TESTING_COMPLETED
             logger.info('report file created successfully')
