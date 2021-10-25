@@ -2,12 +2,9 @@ import sys
 
 sys.path.append('.')
 
-import os
 import torch
-from sklearn.metrics import classification_report
 from flnode.pipeline.algo import Algo
 from common.utils import Mapping
-from monai.metrics import compute_roc_auc
 from monai.utils import set_determinism
 from monai.inferers import sliding_window_inference
 import numpy as np
@@ -42,13 +39,14 @@ class MonaiAlgo(Algo):
         best_metric = -1
         best_metric_epoch = -1
         epoch_loss_values = list()
-        metric_values = list()
+        val_mean_dice_scores = list()
 
         self.model.to(device)
         for epoch in range(self.epochs):
             print("-" * 10)
             print(f"epoch {epoch + 1}/{self.epochs}")
             self.model.train()
+            epoch_loss = 0
             for batch_idx, (data_batch) in enumerate(self.train_loader):
                 data, target = data_batch['img'].to(DEVICE), data_batch['seg'].to(DEVICE)
 
@@ -57,6 +55,10 @@ class MonaiAlgo(Algo):
                 loss = self.loss(output, target)
                 loss.backward()
                 self.optimizer.step()
+                epoch_loss += loss.item()
+            epoch_loss /= (batch_idx + 1) 
+            epoch_loss_values.append(epoch_loss) 
+            print(f"epoch {epoch + 1} average loss: {epoch_loss:.4f}")
 
             if (epoch + 1) % val_interval == 0:
                 print('Validating')
@@ -76,11 +78,12 @@ class MonaiAlgo(Algo):
 
                         # loss = self.criterion(output, target)
                         val_metrics.append(self.metric(output, target, include_background=False).cpu().numpy())
-                mean_val_metric = np.mean(val_metrics)
-                print(mean_val_metric)
+                mean_val_metric = float(np.mean(val_metrics))
+                print(f"epoch {epoch + 1} average validation dice score: {mean_val_metric:.4f}")
+                val_mean_dice_scores.append(mean_val_metric)
 
         checkpoint = Mapping()
-        checkpoint.update(epoch=epoch, weights=self.model.state_dict(), metric=mean_val_metric)
+        checkpoint.update(epoch=epoch+1, weights=self.model.state_dict(), val_mean_dice_scores=val_mean_dice_scores, train_loss_values=epoch_loss_values)
         # print(f"train completed, best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}")
         return checkpoint
 
@@ -113,8 +116,8 @@ class MonaiAlgo(Algo):
                 output = torch.sigmoid(output_logits)
 
                 # loss = self.criterion(output, target)
-                dice_scores.append(self.metric(output, target, include_background=False).cpu().numpy())
+                dice_scores.append(self.metric(output, target, include_background=False).cpu().numpy().tolist())
         test_report = Mapping()
-        test_report.update(report=dice_scores, target_names='dice', digits=4)
+        test_report.update(test_dice_scores=dice_scores, target_names='dice', digits=4)
 
         return test_report

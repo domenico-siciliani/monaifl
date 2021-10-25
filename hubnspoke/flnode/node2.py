@@ -109,7 +109,7 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
 
         logger.info("sending test report to the Central Hub...")       
         buffer = BytesIO()
-        t.save(response_data['report'], buffer)
+        t.save(response_data, buffer)
         return ParamsResponse(para_response=buffer.getvalue())
     
     def StopMessage(self, request, context):
