@@ -35,7 +35,7 @@ class MonaiOpener(Opener):
                 self.num_unpaired += 1
         self.num_total = len(self.image_and_label_files)
 
-    def data_summary(self):
+    def data_summary(self, logger):
         if not hasattr(self, 'image_and_label_files'):
             self.get_image_and_label_list()
 
@@ -43,10 +43,10 @@ class MonaiOpener(Opener):
         image_sizes = [nib.load(f['img']).shape for f in self.image_and_label_files]
 
 
-        print(f"Total paired image  and labels: {self.num_total}")
-        print(f"Total images with no label found: {self.num_unpaired}")
+        logger.info(f"Total paired image  and labels: {self.num_total}")
+        logger.info(f"Total images with no label found: {self.num_unpaired}")
         mean_size = np.array(image_sizes).mean(axis=0).astype(np.int16)
-        print(f"Mean image size: {mean_size}\n")
+        logger.info(f"Mean image size: {mean_size}")
 
         # # uncomment to take a quick peek at the data
         # num_to_plot=4

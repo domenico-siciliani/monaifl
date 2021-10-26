@@ -35,10 +35,7 @@ def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, da
     data_dir = data_path / datasetName
 
     mo = MonaiOpener(data_dir)
-    logger.info("----------------------------")
-    logger.info("Dataset Summary")
-    print("----------------------------")
-    mo.data_summary()
+    mo.data_summary(logger)
 
     train, val, test = mo.get_x_y(frac_val, frac_test, frac_initial_dataset)
     logger.info(f"Training count: {len(train)}, Validation count: {len(val)}, Test count: {len(test)}")
