@@ -32,6 +32,10 @@ def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, da
     cwd = Path.cwd()
     data_path = cwd.parent / 'data_provider'/ 'FLIP'
     data_dir = data_path / dataset_name
+    if Path(data_dir).exists():
+        logger.info(f'dataset available in path {data_dir}')
+    else:
+        raise FileNotFoundError(f"dataset not reachable")
 
     mo = MonaiOpener(data_dir)
     mo.data_summary(logger)
