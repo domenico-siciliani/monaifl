@@ -78,9 +78,9 @@ def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, da
     val_dataset = Dataset(val, transform=val_transforms)
     test_dataset = Dataset(test, transform=val_transforms)
 
-    ma.train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=2)
-    ma.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=2)
-    ma.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
+    ma.train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
+    ma.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0)
+    ma.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
 
     # model initiliatization
 
