@@ -1,6 +1,5 @@
 from pathlib import Path
 cwd = str(Path.cwd())
-print(cwd)
 
 import os
 import sys
@@ -191,7 +190,6 @@ class Client():
                 }
             t.save(cpt, modelFile)
 
-            print(result_file_dict)
             logger.info(f"writing training results in {self.reportFile}...")
             with open(self.reportFile, 'w') as f:
                 json.dump(result_file_dict, f)
