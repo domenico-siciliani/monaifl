@@ -28,11 +28,10 @@ else:
     DEVICE = "cpu"
 
 
-def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, dataset_name='CROMIS4AD_READY'):  # /home/dsiciliani/Documents/Projects/ANS001/FLIP/monaifl/data_provider/FLIP/CROMIS4AD_READY
+def instantiateMonaiAlgo(frac_val=0.1, frac_test=0.1, frac_initial_dataset=1, dataset_name='CROMIS4AD_READY'):
     cwd = Path.cwd()
-    datasetName = dataset_name
     data_path = cwd.parent / 'data_provider'/ 'FLIP'
-    data_dir = data_path / datasetName
+    data_dir = data_path / dataset_name
 
     mo = MonaiOpener(data_dir)
     mo.data_summary(logger)
