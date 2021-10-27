@@ -66,58 +66,66 @@ class Client():
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            logger.info("bootstrapping...")
-            buffer = BytesIO()
-            if self.address in whitelist:
-                logger.info("fl node is whitelisted")
-                if os.path.isfile(modelFile):
-                    logger.info(f"buffering the provided initial model {modelFile}...") 
-                    checkpoint = t.load(modelFile)
-                    t.save(checkpoint['weights'], buffer)
+            try:
+                logger.info("bootstrapping...")
+                buffer = BytesIO()
+                if self.address in whitelist:
+                    logger.info("fl node is whitelisted")
+                    if os.path.isfile(modelFile):
+                        logger.info(f"buffering the provided initial model {modelFile}...") 
+                        checkpoint = t.load(modelFile)
+                        t.save(checkpoint['weights'], buffer)
+                    else:
+                        logger.info("initial model does not exist, initializing and buffering a new one...")
+                        t.save(self.model.state_dict(), buffer)
+                    size = buffer.getbuffer().nbytes
+                    
+                    logger.info("sending the initial model...")
+                    opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
+                    self.channel = grpc.insecure_channel(self.address, options = opts)
+                    client = MonaiFLServiceStub(self.channel)
+                    fl_request = ParamsRequest(para_request=buffer.getvalue())
+                    fl_response = client.ModelTransfer(fl_request)
+
+                    logger.info("answer received")
+                    response_bytes = BytesIO(fl_response.para_response)
+                    response_data = t.load(response_bytes, map_location='cpu')
+
+                    logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
+                    logger.info(f"returned status: {response_data}") # Model received OR Error
                 else:
-                    logger.info("initial model does not exist, initializing and buffering a new one...")
-                    t.save(self.model.state_dict(), buffer)
-                size = buffer.getbuffer().nbytes
-                
-                logger.info("sending the initial model...")
-                opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
-                self.channel = grpc.insecure_channel(self.address, options = opts)
-                client = MonaiFLServiceStub(self.channel)
-                fl_request = ParamsRequest(para_request=buffer.getvalue())
-                fl_response = client.ModelTransfer(fl_request)
-
-                logger.info("answer received")
-                response_bytes = BytesIO(fl_response.para_response)
-                response_data = t.load(response_bytes, map_location='cpu')
-
-                logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
-                logger.info(f"returned status: {response_data}") # Model received OR Error
-            else:
-                logger.error("fl node is not whitelisted. Please contact admin for permissions")
+                    logger.error("fl node is not whitelisted. Please contact admin for permissions")
+            except grpc.RpcError as rpc_error:
+                logger.info(rpc_error.code())
+                logger.info("returned status: dead")
 
     def train(self):
         logger_extra['status'] = Stage.TRAINING_STARTED
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            self.data = {"id": "server"} # useless
-            buffer = BytesIO()
-            t.save(self.data, buffer)
-            size = buffer.getbuffer().nbytes
+            try:
+                self.data = {"id": "server"} # useless
+                buffer = BytesIO()
+                t.save(self.data, buffer)
+                size = buffer.getbuffer().nbytes
 
-            logger.info(f"sending the training request...")
-            opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
-            self.channel = grpc.insecure_channel(self.address, options = opts)
-            client = MonaiFLServiceStub(self.channel)
-            fl_request = ParamsRequest(para_request=buffer.getvalue())
-            fl_response = client.MessageTransfer(fl_request)
+                logger.info(f"sending the training request...")
+                opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
+                self.channel = grpc.insecure_channel(self.address, options = opts)
+                client = MonaiFLServiceStub(self.channel)
+                fl_request = ParamsRequest(para_request=buffer.getvalue())
+                fl_response = client.MessageTransfer(fl_request)
 
-            logger.info("answer received")
-            response_bytes = BytesIO(fl_response.para_response)
-            response_data = t.load(response_bytes, map_location='cpu')
+                logger.info("answer received")
+                response_bytes = BytesIO(fl_response.para_response)
+                response_data = t.load(response_bytes, map_location='cpu')
 
-            logger_extra['status'] = Stage.TRAINING_COMPLETED
-            logger.info(f"returned status: {response_data}") # Training completed 
+                logger_extra['status'] = Stage.TRAINING_COMPLETED
+                logger.info(f"returned status: {response_data}") # Training completed 
+            except grpc.RpcError as rpc_error:
+                logger.info(rpc_error.code())
+                logger.info("returned status: dead")
     
     def status(self):
         try:
@@ -164,89 +172,101 @@ class Client():
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            checkpoint = self.gather()
-            result_file_dict = dict()
-            for k in checkpoint.keys():
-                if k == "epoch":
-                    logger.info(f"local epochs: {checkpoint[k]}") 
-                    result_file_dict[k] = checkpoint[k]
-                elif k == "weights":
-                    w = checkpoint['weights']
-                    logger.info("copying weights...")
-                    w_loc.append(copy.deepcopy(w))
-                    logger.info("aggregating weights...")
-                    w_glob = FedAvg(w_loc)
-                elif k == "val_mean_dice_scores":
-                    logger.info(f"validation mean dice scores: {checkpoint[k]}" )
-                    result_file_dict[k] = checkpoint[k]
-                elif k == "train_loss_values":
-                    logger.info(f"training loss values: {checkpoint[k]}" )
-                    result_file_dict[k] = checkpoint[k]
-                else:
-                    logger.info(f"unknown data received from the node (unexpected key found: {k})")
-            cpt = {#'epoch': 1, # to be determined
-                'weights': w_glob#,
-                #'metric': 0 # to be aggregated
-                }
-            t.save(cpt, modelFile)
+            try:
+                checkpoint = self.gather()
+                result_file_dict = dict()
+                for k in checkpoint.keys():
+                    if k == "epoch":
+                        logger.info(f"local epochs: {checkpoint[k]}") 
+                        result_file_dict[k] = checkpoint[k]
+                    elif k == "weights":
+                        w = checkpoint['weights']
+                        logger.info("copying weights...")
+                        w_loc.append(copy.deepcopy(w))
+                        logger.info("aggregating weights...")
+                        w_glob = FedAvg(w_loc)
+                    elif k == "val_mean_dice_scores":
+                        logger.info(f"validation mean dice scores: {checkpoint[k]}" )
+                        result_file_dict[k] = checkpoint[k]
+                    elif k == "train_loss_values":
+                        logger.info(f"training loss values: {checkpoint[k]}" )
+                        result_file_dict[k] = checkpoint[k]
+                    else:
+                        logger.info(f"unknown data received from the node (unexpected key found: {k})")
+                cpt = {#'epoch': 1, # to be determined
+                    'weights': w_glob#,
+                    #'metric': 0 # to be aggregated
+                    }
+                t.save(cpt, modelFile)
 
-            logger.info(f"writing training results in {self.reportFile}...")
-            with open(self.reportFile, 'w') as f:
-                json.dump(result_file_dict, f)
+                logger.info(f"writing training results in {self.reportFile}...")
+                with open(self.reportFile, 'w') as f:
+                    json.dump(result_file_dict, f)
 
-            logger_extra['status'] = Stage.AGGREGATION_COMPLETED
-            logger.info("aggregation completed")
+                logger_extra['status'] = Stage.AGGREGATION_COMPLETED
+                logger.info("aggregation completed")
+            except grpc.RpcError as rpc_error:
+                logger.info(rpc_error.code())
+                logger.info("returned status: dead")
         
     def test(self):
         logger_extra['status'] = Stage.TESTING_STARTED
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            buffer = BytesIO()
-            checkpoint = t.load(modelFile)
-            t.save(checkpoint['weights'], buffer)
-            size = buffer.getbuffer().nbytes
+            try:
+                buffer = BytesIO()
+                checkpoint = t.load(modelFile)
+                t.save(checkpoint['weights'], buffer)
+                size = buffer.getbuffer().nbytes
 
-            logger.info("sending the test request...")
-            opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
-            self.channel = grpc.insecure_channel(self.address, options = opts)
-            client = MonaiFLServiceStub(self.channel)
-            fl_request = ParamsRequest(para_request=buffer.getvalue())
-            fl_response = client.ReportTransfer(fl_request)
+                logger.info("sending the test request...")
+                opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
+                self.channel = grpc.insecure_channel(self.address, options = opts)
+                client = MonaiFLServiceStub(self.channel)
+                fl_request = ParamsRequest(para_request=buffer.getvalue())
+                fl_response = client.ReportTransfer(fl_request)
 
-            logger.info("test results received")
-            response_bytes = BytesIO(fl_response.para_response)    
-            response_data = t.load(response_bytes, map_location='cpu')
-            
+                logger.info("test results received")
+                response_bytes = BytesIO(fl_response.para_response)    
+                response_data = t.load(response_bytes, map_location='cpu')
+                
 
-            logger.info(f"writing test results in {self.reportFile}...")
-            with open(self.reportFile, 'r+') as f:
-                result_file_dict = json.load(f)
-                result_file_dict['test_dice_scores'] = response_data['test_dice_scores']
-                f.seek(0)
-                json.dump(result_file_dict, f, indent = 4)
+                logger.info(f"writing test results in {self.reportFile}...")
+                with open(self.reportFile, 'r+') as f:
+                    result_file_dict = json.load(f)
+                    result_file_dict['test_dice_scores'] = response_data['test_dice_scores']
+                    f.seek(0)
+                    json.dump(result_file_dict, f, indent = 4)
 
-            logger_extra['status'] = Stage.TESTING_COMPLETED
-            logger.info('report file created successfully')
+                logger_extra['status'] = Stage.TESTING_COMPLETED
+                logger.info('report file created successfully')
+            except grpc.RpcError as rpc_error:
+                logger.info(rpc_error.code())
+                logger.info("returned status: dead")
     
     def stop(self):
         logger_extra['status'] = Stage.FEDERATION_COMPLETED
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            self.data={"stop":"yes"} # useless
-            buffer = BytesIO()
-            t.save(self.data, buffer)
-            size = buffer.getbuffer().nbytes
+            try:
+                self.data={"stop":"yes"} # useless
+                buffer = BytesIO()
+                t.save(self.data, buffer)
+                size = buffer.getbuffer().nbytes
 
-            logger.info("sending the stop message...")
-            opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
-            self.channel = grpc.insecure_channel(self.address, options = opts)
-            client = MonaiFLServiceStub(self.channel)
-            fl_request = ParamsRequest(para_request=buffer.getvalue())
-            fl_response = client.StopMessage(fl_request)
+                logger.info("sending the stop message...")
+                opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
+                self.channel = grpc.insecure_channel(self.address, options = opts)
+                client = MonaiFLServiceStub(self.channel)
+                fl_request = ParamsRequest(para_request=buffer.getvalue())
+                fl_response = client.StopMessage(fl_request)
 
-            logger.info("received the node status")
-            response_bytes = BytesIO(fl_response.para_response)    
-            response_data = t.load(response_bytes, map_location='cpu')
-            logger.info(f"returned status: {response_data['reply']}")
+                logger.info("received the node status")
+                response_bytes = BytesIO(fl_response.para_response)    
+                response_data = t.load(response_bytes, map_location='cpu')
+                logger.info(f"returned status: {response_data['reply']}")
+            except grpc.RpcError as rpc_error:
+                logger.info(rpc_error.code())
+                logger.info("returned status: dead")
