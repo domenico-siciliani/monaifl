@@ -232,6 +232,6 @@ def instantiateMonaiAlgo(logger, frac_val=0.2, frac_test=0.2, frac_initial_datas
     ma.optimizer = torch.optim.Adam(ma.model.parameters(), lr=1e-5, weight_decay=0, amsgrad=True)
 
     # number of epochs
-    ma.epochs = 2
+    ma.epochs = 1
 
     return ma
