@@ -138,4 +138,8 @@ def serve():
     server.stop(5)
 
 if __name__ == "__main__":
+    if t.cuda.is_available():
+        logger.info('CUDA is available. GPU will be used')
+    else:
+        logger.info('CUDA is not available. CPU will be used')
     serve()
