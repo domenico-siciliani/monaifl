@@ -95,17 +95,17 @@ class Client():
             else:
                 logger.error("fl node is not whitelisted. Please contact admin for permissions")
 
-    def train(self, epochs):
+    def train(self):
         logger_extra['status'] = Stage.TRAINING_STARTED
         logger_extra['trust_name'] = self.name
 
         if self.status() == "alive":
-            self.data = {"epochs": epochs}
+            self.data = {"id": "server"} # useless
             buffer = BytesIO()
             t.save(self.data, buffer)
             size = buffer.getbuffer().nbytes
 
-            logger.info(f"sending the training request for {epochs} local epochs...")
+            logger.info(f"sending the training request...")
             opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
             self.channel = grpc.insecure_channel(self.address, options = opts)
             client = MonaiFLServiceStub(self.channel)

@@ -13,7 +13,7 @@ from common import monaifl_pb2_grpc as monaifl_pb2_grpc
 from common.monaifl_pb2 import ParamsResponse
 from common.utils import Mapping
 import torch as t
-from flnode.start_pipeline import instantiateMonaiAlgo
+from flnode.pipeline.monaialgo import instantiateMonaiAlgo
 import logging
 logging.basicConfig(format='[%(asctime)s]-%(message)s')
 logger = logging.getLogger()
@@ -30,7 +30,7 @@ trunkModelFile = os.path.join(trunkmodelpath, modelName)
 
 w_loc = []
 request_data = Mapping()
-ma = instantiateMonaiAlgo(0.2, 0.2, frac_initial_dataset=0.095, dataset_name='CROMIS4AD_READY')
+ma = instantiateMonaiAlgo(logger)
 
 class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def __init__(self, stop_event):
@@ -57,10 +57,9 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
         logger.info('received training configurations')
-        logger.info(f"local epochs to run: {request_data['epochs']}")
+        logger.info(f"local epochs to run: {ma.epochs}")
         # training and checkpoints
         logger.info("starting training...")
-        ma.epochs = int(request_data['epochs'])
         checkpoint = Mapping()
         checkpoint = ma.train()
         logger.info("saving trained local model...")

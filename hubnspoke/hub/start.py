@@ -38,7 +38,7 @@ def model_spread_plan(client):
 
 def train_plan(client):
     # initializing training on nodes
-    client.train(epochs='1')
+    client.train()
     
 def aggregate_plan(client):
     # aggregating models from nodes
