@@ -36,91 +36,109 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
         self._stop_event = stop_event
     
     def ModelTransfer(self, request, context):
-        request_bytes = BytesIO(request.para_request)
-        request_data = t.load(request_bytes, map_location='cpu')
-        t.save(request_data, headModelFile)
-        if os.path.isfile(headModelFile):
-            request_data.update(reply="model received")
-            logger.info(f"global model saved at: {headModelFile}")
-            logger.info("FL node is ready for training and waiting for training configurations")
-        else:
-            request_data.update(reply="error while receiving the model")
-            logger.error("FL node is not ready for training")
-        
-        logger.info("returning answer to the central Hub...")
-        buffer = BytesIO()
-        t.save(request_data['reply'], buffer)
-        return ParamsResponse(para_response=buffer.getvalue())
+        try:
+            request_bytes = BytesIO(request.para_request)
+            request_data = t.load(request_bytes, map_location='cpu')
+            t.save(request_data, headModelFile)
+            if os.path.isfile(headModelFile):
+                request_data.update(reply="model received")
+                logger.info(f"global model saved at: {headModelFile}")
+                logger.info("FL node is ready for training and waiting for training configurations")
+            else:
+                request_data.update(reply="error while receiving the model")
+                logger.error("FL node is not ready for training")
+            
+            logger.info("returning answer to the central Hub...")
+            buffer = BytesIO()
+            t.save(request_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
     
     def MessageTransfer(self, request, context):
-        request_bytes = BytesIO(request.para_request)
-        request_data = t.load(request_bytes, map_location='cpu')
-        logger.info('received training configurations')
-        # training and checkpoints
-        logger.info("starting training...")
-        checkpoint = Mapping()
-        checkpoint = ma.train()
-        logger.info("saving trained local model...")
-        t.save(checkpoint, trunkModelFile)
-        logger.info(f"local model saved at: {trunkModelFile}")
-        logger.info("sending training completed message to the the Central Hub...")
-        buffer = BytesIO()
-        request_data.update(reply="training completed")
-        t.save(request_data['reply'], buffer)
-        return ParamsResponse(para_response=buffer.getvalue())
+        try:
+            request_bytes = BytesIO(request.para_request)
+            request_data = t.load(request_bytes, map_location='cpu')
+            logger.info('received training configurations')
+            # training and checkpoints
+            logger.info("starting training...")
+            checkpoint = Mapping()
+            checkpoint = ma.train()
+            logger.info("saving trained local model...")
+            t.save(checkpoint, trunkModelFile)
+            logger.info(f"local model saved at: {trunkModelFile}")
+            logger.info("sending training completed message to the the Central Hub...")
+            buffer = BytesIO()
+            request_data.update(reply="training completed")
+            t.save(request_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
     
     def NodeStatus(self, request, context):
-        logger.info("received status request")
-                
-        request_data.update(reply="alive")
-        logger.info("node status: alive")
-        
-        logger.info("sending node status to the central hub...")
-        buffer = BytesIO()
-        t.save(request_data['reply'], buffer)
-        return ParamsResponse(para_response=buffer.getvalue())
+        try:
+            logger.info("received status request")
+                    
+            request_data.update(reply="alive")
+            logger.info("node status: alive")
+            
+            logger.info("sending node status to the central hub...")
+            buffer = BytesIO()
+            t.save(request_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
     
     def TrainedModel(self, request, context):
-        buffer = BytesIO()
-        if os.path.isfile(trunkModelFile):
-                logger.info(f"sending trained model {trunkModelFile} to the central Hub...") 
-                checkpoint = t.load(trunkModelFile, map_location='cpu')
-                t.save(checkpoint, buffer)
+        try:
+            buffer = BytesIO()
+            if os.path.isfile(trunkModelFile):
+                    logger.info(f"sending trained model {trunkModelFile} to the central Hub...") 
+                    checkpoint = t.load(trunkModelFile, map_location='cpu')
+                    t.save(checkpoint, buffer)
 
-        return ParamsResponse(para_response=buffer.getvalue())
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
     
     def ReportTransfer(self, request, context):
-        request_bytes = BytesIO(request.para_request)
-        request_data = t.load(request_bytes, map_location='cpu')
-        t.save(request_data, headModelFile)
-        if os.path.isfile(headModelFile):
-            request_data.update(reply="model received for testing")
-            logger.info(f"global model saved at: {headModelFile}")
-        else:
-            request_data.update(reply="error while receiving the model")
+        try:
+            request_bytes = BytesIO(request.para_request)
+            request_data = t.load(request_bytes, map_location='cpu')
+            t.save(request_data, headModelFile)
+            if os.path.isfile(headModelFile):
+                request_data.update(reply="model received for testing")
+                logger.info(f"global model saved at: {headModelFile}")
+            else:
+                request_data.update(reply="error while receiving the model")
 
-        logger.info('received test request')
+            logger.info('received test request')
 
-        response_data = Mapping()
-        response_data = ma.predict(headModelFile)
+            response_data = Mapping()
+            response_data = ma.predict(headModelFile)
 
-        logger.info("sending test report to the Central Hub...")       
-        buffer = BytesIO()
-        t.save(response_data, buffer)
-        return ParamsResponse(para_response=buffer.getvalue())
+            logger.info("sending test report to the Central Hub...")       
+            buffer = BytesIO()
+            t.save(response_data, buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
     
     def StopMessage(self, request, context):
-        request_bytes = BytesIO(request.para_request)
-        request_data = t.load(request_bytes, map_location='cpu')
-        logger.info('received stop request')   
-        logger.info("sending stopping status to the Central Hub...")
-        buffer = BytesIO()
-        response_data = Mapping()
-        response_data.update(reply="stopping")
-        t.save(response_data, buffer)
-        logger.info('node stopping...thanks for using MONAI-FL...see you soon.')  
-        self._stop_event.set() 
-        return ParamsResponse(para_response=buffer.getvalue())
+        try:
+            request_bytes = BytesIO(request.para_request)
+            request_data = t.load(request_bytes, map_location='cpu')
+            logger.info('received stop request')   
+            logger.info("sending stopping status to the Central Hub...")
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply="stopping")
+            t.save(response_data, buffer)
+            logger.info('node stopping...thanks for using MONAI-FL...see you soon.')  
+            self._stop_event.set() 
+            return ParamsResponse(para_response=buffer.getvalue())
+        except Exception as e:
+            logger.error(e)
 
 def serve():
     stop_event = threading.Event()
