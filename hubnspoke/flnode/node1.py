@@ -141,17 +141,20 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
             logger.error(e)
 
 def serve():
-    stop_event = threading.Event()
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),options=[
-               ('grpc.max_send_message_length', 1000*1024*1024),
-               ('grpc.max_receive_message_length', 1000*1024*1024)])
-    monaifl_pb2_grpc.add_MonaiFLServiceServicer_to_server(
-        MonaiFLService(stop_event), server)
-    server.add_insecure_port("[::]:50051")
-    server.start()
-    logger.info("FL node is up and waiting for training configurations...")
-    stop_event.wait()
-    server.stop(5)
+    try:
+        stop_event = threading.Event()
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),options=[
+                ('grpc.max_send_message_length', 1000*1024*1024),
+                ('grpc.max_receive_message_length', 1000*1024*1024)])
+        monaifl_pb2_grpc.add_MonaiFLServiceServicer_to_server(
+            MonaiFLService(stop_event), server)
+        server.add_insecure_port("[::]:50051")
+        server.start()
+        logger.info("FL node is up and waiting for training configurations...")
+        stop_event.wait()
+        server.stop(5)
+    except Exception as e:
+        logger.error(e)
 
 if __name__ == "__main__":
     if t.cuda.is_available():
