@@ -51,12 +51,9 @@ class Client():
         self.address = address
         whitelist.add(address)
         self.name = name
-        self.client = None
         self.data = None
         self.model = None
-        self.optimizer = None
         self.modelFile = os.path.join(modelpath, modelName)
-        self.loc_weights = None
         reportName = self.name.replace(' ','') + '.json'
         self.reportFile = os.path.join(modelpath, reportName)
     
