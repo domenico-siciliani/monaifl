@@ -177,9 +177,21 @@ class MonaiAlgo(Algo):
         val_dataset = Dataset(val, transform=val_transforms)
         test_dataset = Dataset(test, transform=val_transforms)
 
-        self.train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
-        self.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0)
-        self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
+        ######################################## MARK FIX FOR FUTURE EVENTUAL MULTIPROCESSING ERRORS ###############################
+        # sharing_strategy = "file_system"
+        # torch.multiprocessing.set_sharing_strategy(sharing_strategy)
+
+        # def set_worker_sharing_strategy(worker_id: int) -> None:
+        #     torch.multiprocessing.set_sharing_strategy(sharing_strategy)
+
+        # self.train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4, worker_init_fn=set_worker_sharing_strategy)
+        # self.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=2, worker_init_fn=set_worker_sharing_strategy)
+        # self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2, worker_init_fn=set_worker_sharing_strategy)
+        #############################################################################################################################
+
+        self.train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=4)
+        self.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=2)
+        self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
 
         # model initiliatization
 
