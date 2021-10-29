@@ -13,7 +13,7 @@ from common import monaifl_pb2_grpc as monaifl_pb2_grpc
 from common.monaifl_pb2 import ParamsResponse
 from common.utils import Mapping
 import torch as t
-from flnode.pipeline.monaialgo import instantiateMonaiAlgo
+from flnode.pipeline.monaialgo import MonaiAlgo
 import logging
 logging.basicConfig(format='[%(asctime)s]-%(message)s')
 logger = logging.getLogger()
@@ -28,9 +28,8 @@ headModelFile = os.path.join(headmodelpath, modelName)
 trunkmodelpath = os.path.join(cwd, "save","models","node1","trunk")
 trunkModelFile = os.path.join(trunkmodelpath, modelName)
 
-w_loc = []
 request_data = Mapping()
-ma = instantiateMonaiAlgo(logger)
+ma = MonaiAlgo(logger)
 
 class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
     def __init__(self, stop_event):
@@ -57,7 +56,6 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
         request_bytes = BytesIO(request.para_request)
         request_data = t.load(request_bytes, map_location='cpu')
         logger.info('received training configurations')
-        logger.info(f"local epochs to run: {ma.epochs}")
         # training and checkpoints
         logger.info("starting training...")
         checkpoint = Mapping()
