@@ -129,7 +129,7 @@ class MonaiAlgo(Algo):
 
         return test_report
 
-    def _initialize_attrs(self, frac_val=0.2, frac_test=0.2, frac_initial_dataset=0.015, dataset_name='CROMIS4AD_READY'):
+    def _initialize_attrs(self, frac_val=0.2, frac_test=0.2, frac_initial_dataset=0.095, dataset_name='CROMIS4AD_READY'):
         cwd = Path.cwd()
         data_path = cwd.parent / 'data_provider'/ 'FLIP'
         data_dir = data_path / dataset_name
