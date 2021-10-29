@@ -7,6 +7,7 @@ from flnode.pipeline.algo import Algo
 from common.utils import Mapping
 from monai.utils import set_determinism
 from monai.inferers import sliding_window_inference
+from monai.losses import DiceLoss
 import numpy as np
 
 from monai.networks.nets import BasicUNet
@@ -183,7 +184,7 @@ class MonaiAlgo(Algo):
         # model initiliatization
 
 
-        class BasicUnet(nn.Module):
+        class BasicUnetSigmoid(nn.Module):
             def __init__(self, num_classes=1):
                 super().__init__()
                 self.net = BasicUNet(dimensions=3,
@@ -200,27 +201,16 @@ class MonaiAlgo(Algo):
                     return logits
 
 
-        self.model = BasicUnet().to(DEVICE)
-
+        self.model = BasicUnetSigmoid().to(DEVICE)
 
         # model loss function
-        def mean_dice(output, target, average=True):
-            # empty labels return a dice score of NaN - replace with 0
-            dice_per_batch = compute_meandice(output, target, include_background=False)
-            dice_per_batch[dice_per_batch.isnan()] = 0
-            if average:
-                return dice_per_batch.mean().cpu()
-            else:
-                return dice_per_batch.cpu()
-
-
-        self.loss = mean_dice
+        self.loss = DiceLoss(include_background=False)
 
         # model metric
         self.metric = compute_meandice
 
         # model optimizer
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-5, weight_decay=0, amsgrad=True)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001, weight_decay=0, amsgrad=True)
 
         # number of epochs
         self.epochs = 1
