@@ -15,6 +15,7 @@ import boto3
 FL_CLIENT_ENDPOINTS = json.loads(os.environ.get('FL_CLIENT_ENDPOINTS'))
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 MODEL_ID = os.environ.get('MODEL_ID')
+GLOBAL_ROUNDS = int(os.environ.get('GLOBAL_ROUNDS'))
 
 modelpath = os.path.join(cwd, "save","models","hub")
 modelName = "monai-test.pth.tar"
@@ -81,16 +82,12 @@ if __name__ == '__main__':
     main_logger.info("fl hub started")
     clients = [Client(fl_client['flclientendpoint'], fl_client['name']) for fl_client in FL_CLIENT_ENDPOINTS]
 
-    global_round = 1
-
-    for round in range(global_round):
-        if (round==0):
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                result = executor.map(model_spread_plan, clients)
-            
-            main_logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
-            main_logger.info("initial model shared with all fl nodes")
-
+    for round in range(GLOBAL_ROUNDS):
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            result = executor.map(model_spread_plan, clients)
+        
+        main_logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
+        main_logger.info("current model shared with all fl nodes")
 
         with concurrent.futures.ProcessPoolExecutor() as executor:
             result = executor.map(train_plan, clients)
@@ -104,12 +101,13 @@ if __name__ == '__main__':
         main_logger_extra['status'] = Stage.AGGREGATION_COMPLETED
         main_logger.info("aggregation completed for all fl nodes models")    
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            result = executor.map(test_plan, clients)    
-        
-        main_logger_extra['status'] = Stage.TESTING_COMPLETED
-        main_logger.info("global model tested in all fl nodes")
-        main_logger.info(f"global round {round+1}/{global_round} completed")
+        main_logger.info(f"global round {round+1}/{GLOBAL_ROUNDS} completed")
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        result = executor.map(test_plan, clients)    
+    
+    main_logger_extra['status'] = Stage.TESTING_COMPLETED
+    main_logger.info("global model tested in all fl nodes")
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         result = executor.map(stop_now, clients)  

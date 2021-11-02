@@ -64,12 +64,12 @@ class Client():
 
         if self.status() == "alive":
             try:
-                logger.info("bootstrapping...")
+                logger.info("starting model sharing...")
                 buffer = BytesIO()
                 if self.address in whitelist:
                     logger.info("fl node is whitelisted")
                     if os.path.isfile(modelFile):
-                        logger.info(f"buffering the provided initial model {modelFile}...") 
+                        logger.info(f"buffering the current model {modelFile}...") 
                         checkpoint = t.load(modelFile)
                         t.save(checkpoint['weights'], buffer)
                     else:
@@ -77,7 +77,7 @@ class Client():
                         t.save(self.model.state_dict(), buffer)
                     size = buffer.getbuffer().nbytes
                     
-                    logger.info("sending the initial model...")
+                    logger.info("sending the current model...")
                     opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
                     self.channel = grpc.insecure_channel(self.address, options = opts)
                     client = MonaiFLServiceStub(self.channel)
@@ -175,7 +175,6 @@ class Client():
                 for k in checkpoint.keys():
                     if k == "epoch":
                         logger.info(f"local epochs: {checkpoint[k]}") 
-                        result_file_dict[k] = checkpoint[k]
                     elif k == "weights":
                         w = checkpoint['weights']
                         logger.info("copying weights...")
@@ -197,8 +196,20 @@ class Client():
                 t.save(cpt, modelFile)
 
                 logger.info(f"writing training results in {self.reportFile}...")
-                with open(self.reportFile, 'w') as f:
-                    json.dump(result_file_dict, f)
+                if not Path(self.reportFile).exists():
+                    initial_reportFile = dict()
+                    with open(self.reportFile, 'w') as f:
+                        # each element of a list will be a list containing the values of a single local epoch
+                        for key in result_file_dict.keys():
+                            initial_reportFile[key] = [result_file_dict[key]]
+                        json.dump(initial_reportFile, f)
+                else:
+                    with open(self.reportFile, 'r+') as f:
+                        reportFile_dict = json.load(f)
+                        for key in reportFile_dict.keys():
+                            reportFile_dict[key].append(result_file_dict[key])
+                        f.seek(0)
+                        json.dump(reportFile_dict, f)
 
                 logger_extra['status'] = Stage.AGGREGATION_COMPLETED
                 logger.info("aggregation completed")
@@ -227,8 +238,8 @@ class Client():
                 logger.info("test results received")
                 response_bytes = BytesIO(fl_response.para_response)    
                 response_data = t.load(response_bytes, map_location='cpu')
+                logger.info(f"test dice scores: {response_data['test_dice_scores']}")
                 
-
                 logger.info(f"writing test results in {self.reportFile}...")
                 with open(self.reportFile, 'r+') as f:
                     result_file_dict = json.load(f)
