@@ -95,6 +95,8 @@ class Client():
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
+            except Exception as e:
+                logger.info(e)
 
     def train(self):
         logger_extra['status'] = Stage.TRAINING_STARTED
@@ -123,6 +125,8 @@ class Client():
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
+            except Exception as e:
+                logger.info(e)
     
     def status(self):
         try:
@@ -205,6 +209,8 @@ class Client():
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
+            except Exception as e:
+                logger.info(e)
         
     def test(self):
         logger_extra['status'] = Stage.TESTING_STARTED
@@ -241,6 +247,8 @@ class Client():
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
+            except Exception as e:
+                logger.info(e)
     
     def stop(self):
         logger_extra['status'] = Stage.FEDERATION_COMPLETED
@@ -267,3 +275,5 @@ class Client():
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
+            except Exception as e:
+                logger.info(e)
