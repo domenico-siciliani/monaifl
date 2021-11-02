@@ -124,7 +124,7 @@ class MonaiAlgo(Algo):
                 output = torch.sigmoid(output_logits)
 
                 # loss = self.criterion(output, target)
-                dice_scores.append(self.metric(output, target, include_background=False).cpu().numpy().tolist())
+                dice_scores.append(self.metric(output, target, include_background=False).cpu().numpy().tolist()[0][0])
         test_report = Mapping()
         test_report.update(test_dice_scores=dice_scores, target_names='dice', digits=4)
 
