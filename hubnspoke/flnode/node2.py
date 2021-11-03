@@ -146,12 +146,13 @@ def serve():
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),options=[
                 ('grpc.max_send_message_length', 1000*1024*1024),
                 ('grpc.max_receive_message_length', 1000*1024*1024),
-                ('grpc.keepalive_time_ms', 10000),
-                ('grpc.keepalive_timeout_ms', 20000),
+                ('grpc.keepalive_time_ms', 60000),
+                ('grpc.keepalive_timeout_ms', 60000),
                 ('grpc.keepalive_permit_without_calls', True),
                 ('grpc.http2.max_pings_without_data', 0),
-                ('grpc.http2.min_time_between_pings_ms', 10000),
-                ('grpc.http2.min_ping_interval_without_data_ms',  5000)])
+                # ('grpc.http2.min_time_between_pings_ms', 10000),
+                # ('grpc.http2.min_ping_interval_without_data_ms',  5000)
+                ])
         monaifl_pb2_grpc.add_MonaiFLServiceServicer_to_server(
             MonaiFLService(stop_event), server)
         server.add_insecure_port("[::]:50052")
