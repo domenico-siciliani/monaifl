@@ -146,7 +146,7 @@ def serve():
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),options=[
                 ('grpc.max_send_message_length', 1000*1024*1024),
                 ('grpc.max_receive_message_length', 1000*1024*1024),
-                ('grpc.keepalive_time_ms', 60000),
+                ('grpc.keepalive_time_ms', 65000),
                 ('grpc.keepalive_timeout_ms', 60000),
                 ('grpc.keepalive_permit_without_calls', True),
                 ('grpc.http2.max_pings_without_data', 0),
