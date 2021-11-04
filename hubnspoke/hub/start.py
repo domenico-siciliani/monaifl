@@ -29,6 +29,13 @@ syslog.setFormatter(formatter)
 main_logger.setLevel(logging.INFO)
 main_logger.addHandler(syslog)
 
+# to write logs in a file
+logpath = os.path.join(modelpath, 'hub.log')
+fh = logging.FileHandler(logpath)
+fh.setLevel(level=logging.INFO)
+fh.setFormatter(formatter)
+main_logger.addHandler(fh)
+
 main_logger_extra = {'model_id': MODEL_ID, 'status': ''}
 main_logger = logging.LoggerAdapter(main_logger, extra=main_logger_extra)
 
@@ -59,7 +66,7 @@ def upload_results_in_s3_bucket(source_path: str, bucket_name: str = 'flip-uploa
 
     bucket_name += '-' + ENVIRONMENT
     
-    main_logger.info('zipping the final model and the test reports...')
+    main_logger.info('zipping the final model and the reports...')
     zip_name = datetime.now().strftime("%Y%m%d_%H%M%S")
     zip_path = os.path.join(cwd, "save", zip_name)
     shutil.make_archive(zip_path, 'zip', source_path)

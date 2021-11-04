@@ -43,6 +43,13 @@ syslog.setFormatter(formatter)
 logger.setLevel(logging.INFO)
 logger.addHandler(syslog)
 
+# to write logs in a file
+logpath = os.path.join(modelpath, 'hub.log')
+fh = logging.FileHandler(logpath)
+fh.setLevel(level=logging.INFO)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 logger_extra = {'model_id': os.environ.get('MODEL_ID'), 'status':'', 'trust_name':''}
 logger = logging.LoggerAdapter(logger, extra=logger_extra)
 
@@ -62,7 +69,7 @@ class Client():
         logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_STARTED
         logger_extra['trust_name'] = self.name
 
-        if self.status() == "alive":
+        if self._status() == "alive":
             try:
                 logger.info("starting model sharing...")
                 buffer = BytesIO()
@@ -86,10 +93,12 @@ class Client():
 
                     logger.info("answer received")
                     response_bytes = BytesIO(fl_response.para_response)
-                    response_data = t.load(response_bytes, map_location='cpu')
+                    response_data = t.load(response_bytes, map_location='cpu') # 'model received' OR Error
+                    if response_data != 'model received': # check if the answer contains an error string instead of the model received status
+                        raise Exception(f"node exception: {response_data}")
 
                     logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
-                    logger.info(f"returned status: {response_data}") # Model received OR Error
+                    logger.info(f"returned status: {response_data}") 
                 else:
                     logger.error("fl node is not whitelisted. Please contact admin for permissions")
             except grpc.RpcError as rpc_error:
@@ -102,7 +111,7 @@ class Client():
         logger_extra['status'] = Stage.TRAINING_STARTED
         logger_extra['trust_name'] = self.name
 
-        if self.status() == "alive":
+        if self._status() == "alive":
             try:
                 self.data = {"id": "server"} # useless
                 buffer = BytesIO()
@@ -118,17 +127,19 @@ class Client():
 
                 logger.info("answer received")
                 response_bytes = BytesIO(fl_response.para_response)
-                response_data = t.load(response_bytes, map_location='cpu')
+                response_data = t.load(response_bytes, map_location='cpu') # 'training completed' OR Error
+                if response_data != 'training completed': # check if the answer contains an error string instead of the training completed status
+                        raise Exception(f"node exception: {response_data}")
 
                 logger_extra['status'] = Stage.TRAINING_COMPLETED
-                logger.info(f"returned status: {response_data}") # Training completed 
+                logger.info(f"returned status: {response_data}") 
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
             except Exception as e:
                 logger.info(e)
     
-    def status(self):
+    def _status(self):
         try:
             self.data = {"check": 'check'}
             buffer = BytesIO()
@@ -150,7 +161,7 @@ class Client():
             logger.info("returned status: dead")
             return 'dead'
   
-    def gather(self):
+    def _gather(self):
         self.data = {"id": "server"} # useless
         buffer = BytesIO()
         t.save(self.data, buffer)
@@ -163,18 +174,21 @@ class Client():
         fl_request = ParamsRequest(para_request=buffer.getvalue())
         fl_response = client.TrainedModel(fl_request)
 
-        logger.info("received the trained model")
         response_bytes = BytesIO(fl_response.para_response)    
         response_data = t.load(response_bytes, map_location='cpu')
+        if isinstance(response_data, str): # check if the answer contains an error string instead of the model
+            raise Exception(f"node exception: {response_data}")
+
+        logger.info("received the trained model")
         return response_data
 
     def aggregate(self, w_loc):
         logger_extra['status'] = Stage.AGGREGATION_STARTED
         logger_extra['trust_name'] = self.name
 
-        if self.status() == "alive":
+        if self._status() == "alive":
             try:
-                checkpoint = self.gather()
+                checkpoint = self._gather()
                 result_file_dict = dict()
                 for k in checkpoint.keys():
                     if k == "epoch":
@@ -227,7 +241,7 @@ class Client():
         logger_extra['status'] = Stage.TESTING_STARTED
         logger_extra['trust_name'] = self.name
 
-        if self.status() == "alive":
+        if self._status() == "alive":
             try:
                 buffer = BytesIO()
                 checkpoint = t.load(modelFile)
@@ -240,10 +254,13 @@ class Client():
                 client = MonaiFLServiceStub(self.channel)
                 fl_request = ParamsRequest(para_request=buffer.getvalue())
                 fl_response = client.ReportTransfer(fl_request)
-
-                logger.info("test results received")
+ 
                 response_bytes = BytesIO(fl_response.para_response)    
                 response_data = t.load(response_bytes, map_location='cpu')
+                if isinstance(response_data, str): # check if the answer contains an error string instead of the test results
+                    raise Exception(f"node exception: {response_data}")
+
+                logger.info("test results received")
                 logger.info(f"test dice scores: {response_data['test_dice_scores']}")
                 
                 logger.info(f"writing test results in {self.reportFile}...")
@@ -265,7 +282,7 @@ class Client():
         logger_extra['status'] = Stage.FEDERATION_COMPLETED
         logger_extra['trust_name'] = self.name
 
-        if self.status() == "alive":
+        if self._status() == "alive":
             try:
                 self.data={"stop":"yes"} # useless
                 buffer = BytesIO()
@@ -281,8 +298,11 @@ class Client():
 
                 logger.info("received the node status")
                 response_bytes = BytesIO(fl_response.para_response)    
-                response_data = t.load(response_bytes, map_location='cpu')
-                logger.info(f"returned status: {response_data['reply']}")
+                response_data = t.load(response_bytes, map_location='cpu') # 'stopping' OR Error
+                if response_data != 'stopping': # check if the answer contains an error string instead of the stopping status
+                        raise Exception(f"node exception: {response_data}")
+
+                logger.info(f"returned status: {response_data}")
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
