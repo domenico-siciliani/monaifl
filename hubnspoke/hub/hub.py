@@ -43,6 +43,13 @@ syslog.setFormatter(formatter)
 logger.setLevel(logging.INFO)
 logger.addHandler(syslog)
 
+# to write logs in a file
+logpath = os.path.join(modelpath, 'hub.log')
+fh = logging.FileHandler(logpath)
+fh.setLevel(level=logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 logger_extra = {'model_id': os.environ.get('MODEL_ID'), 'status':'', 'trust_name':''}
 logger = logging.LoggerAdapter(logger, extra=logger_extra)
 
