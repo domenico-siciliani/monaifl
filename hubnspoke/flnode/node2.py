@@ -54,6 +54,11 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
             return ParamsResponse(para_response=buffer.getvalue())
         except Exception as e:
             logger.error(e)
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply=str(e))
+            t.save(response_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
     
     def MessageTransfer(self, request, context):
         try:
@@ -74,6 +79,11 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
             return ParamsResponse(para_response=buffer.getvalue())
         except Exception as e:
             logger.error(e)
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply=str(e))
+            t.save(response_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
     
     def NodeStatus(self, request, context):
         try:
@@ -96,10 +106,16 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
                     logger.info(f"sending trained model {trunkModelFile} to the central Hub...") 
                     checkpoint = t.load(trunkModelFile, map_location='cpu')
                     t.save(checkpoint, buffer)
-
+            else:
+                raise FileNotFoundError(f"trained model not found in {trunkModelFile}")
             return ParamsResponse(para_response=buffer.getvalue())
         except Exception as e:
             logger.error(e)
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply=str(e))
+            t.save(response_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
     
     def ReportTransfer(self, request, context):
         try:
@@ -123,6 +139,11 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
             return ParamsResponse(para_response=buffer.getvalue())
         except Exception as e:
             logger.error(e)
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply=str(e))
+            t.save(response_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
     
     def StopMessage(self, request, context):
         try:
@@ -133,12 +154,17 @@ class MonaiFLService(monaifl_pb2_grpc.MonaiFLServiceServicer):
             buffer = BytesIO()
             response_data = Mapping()
             response_data.update(reply="stopping")
-            t.save(response_data, buffer)
+            t.save(response_data['reply'], buffer)
             logger.info('node stopping...thanks for using MONAI-FL...see you soon.')  
             self._stop_event.set() 
             return ParamsResponse(para_response=buffer.getvalue())
         except Exception as e:
             logger.error(e)
+            buffer = BytesIO()
+            response_data = Mapping()
+            response_data.update(reply=str(e))
+            t.save(response_data['reply'], buffer)
+            return ParamsResponse(para_response=buffer.getvalue())
 
 def serve():
     try:

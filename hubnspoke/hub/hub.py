@@ -163,9 +163,11 @@ class Client():
         fl_request = ParamsRequest(para_request=buffer.getvalue())
         fl_response = client.TrainedModel(fl_request)
 
-        logger.info("received the trained model")
         response_bytes = BytesIO(fl_response.para_response)    
         response_data = t.load(response_bytes, map_location='cpu')
+        if isinstance(response_data, str): # check if the answer contains an error string instead of the model
+            raise Exception(f"returned status: {response_data}")
+        logger.info("received the trained model")
         return response_data
 
     def aggregate(self, w_loc):
@@ -240,10 +242,12 @@ class Client():
                 client = MonaiFLServiceStub(self.channel)
                 fl_request = ParamsRequest(para_request=buffer.getvalue())
                 fl_response = client.ReportTransfer(fl_request)
-
-                logger.info("test results received")
+ 
                 response_bytes = BytesIO(fl_response.para_response)    
                 response_data = t.load(response_bytes, map_location='cpu')
+                if isinstance(response_data, str): # check if the answer contains an error string instead of the test results
+                    raise Exception(f"returned status: {response_data}")
+                logger.info("test results received")
                 logger.info(f"test dice scores: {response_data['test_dice_scores']}")
                 
                 logger.info(f"writing test results in {self.reportFile}...")
@@ -282,7 +286,7 @@ class Client():
                 logger.info("received the node status")
                 response_bytes = BytesIO(fl_response.para_response)    
                 response_data = t.load(response_bytes, map_location='cpu')
-                logger.info(f"returned status: {response_data['reply']}")
+                logger.info(f"returned status: {response_data}")
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
