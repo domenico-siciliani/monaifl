@@ -32,7 +32,7 @@ main_logger.addHandler(syslog)
 # to write logs in a file
 logpath = os.path.join(modelpath, 'hub.log')
 fh = logging.FileHandler(logpath)
-fh.setLevel(level=logging.DEBUG)
+fh.setLevel(level=logging.INFO)
 fh.setFormatter(formatter)
 main_logger.addHandler(fh)
 
