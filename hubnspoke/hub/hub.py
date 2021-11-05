@@ -36,9 +36,9 @@ service_config = json.dumps(
             {
                 "name": [{"service": "protobufs.MonaiFLService"}],
                 "retryPolicy": {
-                    "maxAttempts": 20,
+                    "maxAttempts": 100,
                     "initialBackoff": "1s",
-                    "maxBackoff": "100s",
+                    "maxBackoff": "1000s",
                     "backoffMultiplier": 2,
                     "retryableStatusCodes": ["UNAVAILABLE"],
                 },
