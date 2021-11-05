@@ -30,22 +30,22 @@ class Stage():
     UPLOAD_COMPLETED = 'UPLOAD_COMPLETED'
     UPLOAD_FAILED = 'UPLOAD_FAILED'
 
-service_config = json.dumps(
-    {
-        "methodConfig": [
-            {
-                "name": [{"service": "protobufs.MonaiFLService"}],
-                "retryPolicy": {
-                    "maxAttempts": 100,
-                    "initialBackoff": "1s",
-                    "maxBackoff": "1000s",
-                    "backoffMultiplier": 2,
-                    "retryableStatusCodes": ["UNAVAILABLE"],
-                },
-            }
-        ]
-    }
-)
+# service_config = json.dumps(
+#     {
+#         "methodConfig": [
+#             {
+#                 "name": [{"service": "protobufs.MonaiFLService"}],
+#                 "retryPolicy": {
+#                     "maxAttempts": 100,
+#                     "initialBackoff": "1s",
+#                     "maxBackoff": "1000s",
+#                     "backoffMultiplier": 2,
+#                     "retryableStatusCodes": ["UNAVAILABLE"],
+#                 },
+#             }
+#         ]
+#     }
+# )
 
 keepalive_opts = [
     ('grpc.keepalive_time_ms', 65000),
@@ -54,7 +54,7 @@ keepalive_opts = [
     ('grpc.http2.max_pings_without_data', 0),
     ('grpc.http2.min_time_between_pings_ms', 65000),
     ('grpc.http2.min_ping_interval_without_data_ms', 60000),
-    ("grpc.service_config", service_config),
+    # ("grpc.service_config", service_config),
 ]
 
 
@@ -114,7 +114,7 @@ class Client():
                     logger.info("sending the current model...")
                     opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
                     opts.extend(keepalive_opts)
-                    self.channel = grpc.insecure_channel(self.address, options = opts)
+                    self.channel = grpc.aio.insecure_channel(self.address, options = opts)
                     client = MonaiFLServiceStub(self.channel)
                     fl_request = ParamsRequest(para_request=buffer.getvalue())
                     fl_response = client.ModelTransfer(fl_request)
@@ -149,7 +149,7 @@ class Client():
                 logger.info(f"sending the training request...")
                 opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
                 opts.extend(keepalive_opts)
-                self.channel = grpc.insecure_channel(self.address, options = opts)
+                self.channel = grpc.aio.insecure_channel(self.address, options = opts)
                 client = MonaiFLServiceStub(self.channel)
                 fl_request = ParamsRequest(para_request=buffer.getvalue())
                 fl_response = client.MessageTransfer(fl_request)
@@ -178,7 +178,7 @@ class Client():
             logger.info("checking fl node status...")
             opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
             opts.extend(keepalive_opts)
-            self.channel = grpc.insecure_channel(self.address, options = opts)
+            self.channel = grpc.aio.insecure_channel(self.address, options = opts)
             client = MonaiFLServiceStub(self.channel)
             fl_request = ParamsRequest(para_request=buffer.getvalue())
             fl_response = client.NodeStatus(fl_request)
@@ -200,7 +200,7 @@ class Client():
         logger.info("sending the request for the trained model...")
         opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
         opts.extend(keepalive_opts)
-        self.channel = grpc.insecure_channel(self.address, options = opts)
+        self.channel = grpc.aio.insecure_channel(self.address, options = opts)
         client = MonaiFLServiceStub(self.channel)
         fl_request = ParamsRequest(para_request=buffer.getvalue())
         fl_response = client.TrainedModel(fl_request)
@@ -282,7 +282,7 @@ class Client():
                 logger.info("sending the test request...")
                 opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
                 opts.extend(keepalive_opts)
-                self.channel = grpc.insecure_channel(self.address, options = opts)
+                self.channel = grpc.aio.insecure_channel(self.address, options = opts)
                 client = MonaiFLServiceStub(self.channel)
                 fl_request = ParamsRequest(para_request=buffer.getvalue())
                 fl_response = client.ReportTransfer(fl_request)
@@ -324,7 +324,7 @@ class Client():
                 logger.info("sending the stop message...")
                 opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
                 opts.extend(keepalive_opts)
-                self.channel = grpc.insecure_channel(self.address, options = opts)
+                self.channel = grpc.aio.insecure_channel(self.address, options = opts)
                 client = MonaiFLServiceStub(self.channel)
                 fl_request = ParamsRequest(para_request=buffer.getvalue())
                 fl_response = client.StopMessage(fl_request)
