@@ -71,7 +71,7 @@ def upload_results_in_s3_bucket(source_path: str, bucket_name: str = 'flip-uploa
     zip_path = os.path.join(cwd, "save", zip_name)
     shutil.make_archive(zip_path, 'zip', source_path)
 
-    main_logger.info(f'uploading zip file {zip_path} to S3 bucket {bucket_name} in folder {MODEL_ID}...')
+    main_logger.info(f'uploading zip file...')
     bucket_zip_path = MODEL_ID + '/' + zip_name
     s3_client = boto3.client('s3')
     try:
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     
     # all processes are excuted
     main_logger_extra['status'] = Stage.FEDERATION_COMPLETED
-    main_logger.info(f"model training is completed across all sites and current global model is available at {modelFile}")
+    main_logger.info(f"federated process completed across all trusts")
 
     upload_results_in_s3_bucket(modelpath)
 
