@@ -30,22 +30,22 @@ class Stage():
     UPLOAD_COMPLETED = 'UPLOAD_COMPLETED'
     UPLOAD_FAILED = 'UPLOAD_FAILED'
 
-# service_config = json.dumps(
-#     {
-#         "methodConfig": [
-#             {
-#                 "name": [{"service": "protobufs.MonaiFLService"}],
-#                 "retryPolicy": {
-#                     "maxAttempts": 100,
-#                     "initialBackoff": "1s",
-#                     "maxBackoff": "1000s",
-#                     "backoffMultiplier": 2,
-#                     "retryableStatusCodes": ["UNAVAILABLE"],
-#                 },
-#             }
-#         ]
-#     }
-# )
+service_config = json.dumps(
+    {
+        "methodConfig": [
+            {
+                "name": [{"service": "protobufs.MonaiFLService"}],
+                "retryPolicy": {
+                    "maxAttempts": 5,
+                    "initialBackoff": "1s",
+                    "maxBackoff": "10s",
+                    "backoffMultiplier": 2,
+                    "retryableStatusCodes": ["UNAVAILABLE"],
+                },
+            }
+        ]
+    }
+)
 
 keepalive_opts = [
     ('grpc.keepalive_time_ms', 65000),
@@ -54,14 +54,13 @@ keepalive_opts = [
     ('grpc.http2.max_pings_without_data', 0),
     ('grpc.http2.min_time_between_pings_ms', 65000),
     ('grpc.http2.min_ping_interval_without_data_ms', 60000),
-    # ("grpc.service_config", service_config),
+    ("grpc.service_config", service_config),
 ]
 
 
 modelpath = os.path.join(cwd, "save","models","hub")
 modelName = "monai-test.pth.tar"
 modelFile = os.path.join(modelpath, modelName)
-whitelist = set()
 
 logger = logging.getLogger('federated_process')
 syslog = logging.StreamHandler()
@@ -83,7 +82,6 @@ logger = logging.LoggerAdapter(logger, extra=logger_extra)
 class Client():
     def __init__(self, address, name):
         self.address = address
-        whitelist.add(address)
         self.name = name
         self.data = None
         self.model = None
@@ -100,35 +98,31 @@ class Client():
             try:
                 logger.info("starting model sharing...")
                 buffer = BytesIO()
-                if self.address in whitelist:
-                    logger.info("fl node is whitelisted")
-                    if os.path.isfile(modelFile):
-                        logger.info(f"buffering the current model {modelFile}...") 
-                        checkpoint = t.load(modelFile)
-                        t.save(checkpoint['weights'], buffer)
-                    else:
-                        logger.info("initial model does not exist, initializing and buffering a new one...")
-                        t.save(self.model.state_dict(), buffer)
-                    size = buffer.getbuffer().nbytes
-                    
-                    logger.info("sending the current model...")
-                    opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
-                    opts.extend(keepalive_opts)
-                    self.channel = grpc.insecure_channel(self.address, options = opts)
-                    client = MonaiFLServiceStub(self.channel)
-                    fl_request = ParamsRequest(para_request=buffer.getvalue())
-                    fl_response = client.ModelTransfer(fl_request)
-
-                    logger.info("answer received")
-                    response_bytes = BytesIO(fl_response.para_response)
-                    response_data = t.load(response_bytes, map_location='cpu') # 'model received' OR Error
-                    if response_data != 'model received': # check if the answer contains an error string instead of the model received status
-                        raise Exception(f"node exception: {response_data}")
-
-                    logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
-                    logger.info(f"returned status: {response_data}") 
+                if os.path.isfile(modelFile):
+                    logger.info(f"buffering the current model {modelFile}...") 
+                    checkpoint = t.load(modelFile)
+                    t.save(checkpoint['weights'], buffer)
                 else:
-                    logger.error("fl node is not whitelisted. Please contact admin for permissions")
+                    logger.info("initial model does not exist, initializing and buffering a new one...")
+                    t.save(self.model.state_dict(), buffer)
+                size = buffer.getbuffer().nbytes
+                
+                logger.info("sending the current model...")
+                opts = [('grpc.max_receive_message_length', 1000*1024*1024), ('grpc.max_send_message_length', size*2), ('grpc.max_message_length', 1000*1024*1024)]
+                opts.extend(keepalive_opts)
+                self.channel = grpc.insecure_channel(self.address, options = opts)
+                client = MonaiFLServiceStub(self.channel)
+                fl_request = ParamsRequest(para_request=buffer.getvalue())
+                fl_response = client.ModelTransfer(fl_request)
+
+                logger.info("answer received")
+                response_bytes = BytesIO(fl_response.para_response)
+                response_data = t.load(response_bytes, map_location='cpu') # 'model received' OR Error
+                if response_data != 'model received': # check if the answer contains an error string instead of the model received status
+                    raise Exception(f"node exception: {response_data}")
+
+                logger_extra['status'] = Stage.FEDERATION_INITIALIZATION_COMPLETED
+                logger.info(f"returned status: {response_data}") 
             except grpc.RpcError as rpc_error:
                 logger.info(rpc_error.code())
                 logger.info("returned status: dead")
