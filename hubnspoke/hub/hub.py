@@ -99,7 +99,7 @@ class Client():
                 logger.info("starting model sharing...")
                 buffer = BytesIO()
                 if os.path.isfile(modelFile):
-                    logger.info(f"buffering the current model {modelFile}...") 
+                    logger.info(f"buffering the current model {modelName}...") 
                     checkpoint = t.load(modelFile)
                     t.save(checkpoint['weights'], buffer)
                 else:
@@ -238,7 +238,7 @@ class Client():
                     }
                 t.save(cpt, modelFile)
 
-                logger.info(f"writing training results in {self.reportFile}...")
+                logger.info(f"writing training results...")
                 if not Path(self.reportFile).exists():
                     initial_reportFile = dict()
                     with open(self.reportFile, 'w') as f:
@@ -289,7 +289,7 @@ class Client():
                 logger.info("test results received")
                 logger.info(f"test dice scores: {response_data['test_dice_scores']}")
                 
-                logger.info(f"writing test results in {self.reportFile}...")
+                logger.info(f"writing test results...")
                 with open(self.reportFile, 'r+') as f:
                     result_file_dict = json.load(f)
                     result_file_dict['test_dice_scores'] = response_data['test_dice_scores']
