@@ -130,7 +130,7 @@ class MonaiAlgo(Algo):
 
         return test_report
 
-    def _initialize_attrs(self, frac_val=0.2, frac_test=0.2, frac_initial_dataset=0.095, dataset_name='CROMIS4AD_READY'):
+    def _initialize_attrs(self, frac_val=0.2, frac_test=0.2, dataset_name='CROMIS4AD_READY'):
         cwd = Path.cwd()
         data_path = cwd.parent / 'data_provider'/ 'FLIP'
         data_dir = data_path / dataset_name
@@ -142,7 +142,7 @@ class MonaiAlgo(Algo):
         mo = MonaiOpener(data_dir)
         mo.data_summary(self.logger)
 
-        train, val, test = mo.get_x_y(frac_val, frac_test, frac_initial_dataset)
+        train, val, test = mo.get_x_y(frac_val, frac_test)
         self.logger.info(f"Training count: {len(train)}, Validation count: {len(val)}, Test count: {len(test)}")
 
         train_transforms = Compose(

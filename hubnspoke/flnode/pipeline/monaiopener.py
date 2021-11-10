@@ -65,16 +65,12 @@ class MonaiOpener(Opener):
         # plt.tight_layout()
         # plt.show()
 
-    def get_x_y(self, frac_val, frac_test, frac_initial_dataset):
+    def get_x_y(self, frac_val, frac_test):
         if not hasattr(self, 'image_and_label_files'):
             self.get_image_and_label_list()
 
         random_state = 0
-        if frac_initial_dataset != 1:
-            dataset, _ = train_test_split(self.image_and_label_files, train_size=float(frac_initial_dataset), random_state=random_state)
-        else: 
-            dataset = self.image_and_label_files
-        train, val_and_test = train_test_split(dataset, train_size=1 - frac_val - frac_test, random_state=random_state)
+        train, val_and_test = train_test_split(self.image_and_label_files, train_size=1 - frac_val - frac_test, random_state=random_state)
         val, test = train_test_split(val_and_test, train_size=frac_val/ (frac_val+frac_test), random_state=random_state)
 
         return (train, val, test)
