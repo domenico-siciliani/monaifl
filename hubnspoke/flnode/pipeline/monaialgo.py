@@ -189,7 +189,7 @@ class MonaiAlgo(Algo):
         # self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2, worker_init_fn=set_worker_sharing_strategy)
         #############################################################################################################################
 
-        self.train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=2)
+        self.train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4)
         self.val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=2)
         self.test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=2)
 
