@@ -10,8 +10,6 @@
 *** github_username, repo_name, twitter_handle, email, project_title, project_description
 -->
 
-
-
 <!-- PROJECT SHIELDS -->
 <!--
 *** I'm using markdown "reference style" links for readability.
@@ -28,11 +26,10 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 -->
 
-
 <!-- PROJECT LOGO -->
 <br />
 <!--<p align="center">
-  <a href="https://github.com/habibcomsats/monaifl">
+  <a href="https://github.com/domenicosiciliani-digica/monaifl">
     <img src="images/logo.png" alt="Logo" width="120" height="80">
   </a>
 -->
@@ -72,8 +69,6 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -84,7 +79,7 @@
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+## 1. About The Project
 <p align="left">
 MONAI-FL is planned to be a tool-agnostic federated learning platform for medical imaging applications. We envision the below-mentioned architecture for our code-base, however, please feel free to modify the code-base considering your own application requirements.
 </p>
@@ -103,133 +98,82 @@ Here's a blank template to get started:
 * [Google gRPC](https://grpc.io/)
 * [Project MONAI](https://monai.io/)
 * [Pytorch](https://pytorch.org/get-started/locally/)
-* [Conda](https://docs.conda.io/en/latest/)
 * [Ubuntu](https://ubuntu.com/)
 
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+## 2. Getting Started
 
 To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
 Following platforms are neccessary to run this project.
-* Linux Installation (preferably Ubuntu distributions). [For other Operating Systems, you can try and share your experience with us :-)]   
+* Linux Installation (preferably Ubuntu distributions)
 
 * install visual studio code
   ```sh
   https://code.visualstudio.com/docs/setup/linux
   ```
-* install conda environment
-  ```sh
-  https://docs.conda.io/en/latest/
-  ```
 
 ### Installation
 
-1. Clone the repo
+1. Install Python 3.8
    ```sh
-   git clone https://github.com/habibcomsats/monaifl.git
+   pip install python==3.8
    ```
-2. Create conda environment
+2. Clone the monaifl repository in your project's directory
    ```sh
-   conda create -n monaifl python=3
+   git clone https://github.com/domenicosiciliani-digica/monaifl.git
    ```
-3. Activate conda environment
+
+3. Go to the monaifl directory
    ```sh
-   conda activate monaifl
+   cd monaifl
    ```
-4. Install your system compatible pytorch version
+
+2. Clone the MONAI repository
    ```sh
-   https://pytorch.org/get-started/locally/
+   git clone https://github.com/Project-MONAI/MONAI.git
    ```
-5. Install MONAI with Nibabel and TQDM
-  ```sh
-  https://docs.monai.io/en/latest/installation.html
-  ```
-6. Install grpc with python compiler
-  ```sh
-  python -m pip install grpcio
-  ```
-  ```sh
-  python -m pip install grpcio-tools
-  ```
-7. Install Pandas
-  ```sh
-  conda install pandas
-  ```
-9. Install Numpy
-  ```sh
-  conda install numpy
-  ```
-<!-- USAGE EXAMPLES -->
-## Usage
+3. Go back to the monaifl directory
+   ```sh
+   cd .. 
+   ```
 
-Reference notebook
-
-https://github.com/Project-MONAI/tutorials/blob/master/2d_classification/mednist_tutorial.ipynb
-
-Mount the dataset:
- This repository contains the demo dataset. If you are cloning this repository, you do not need to mount any dataset. Otherwise, you must execute the cell 5 from the reference notebook, extract the dataset at your preferred location and set the path in testmonai.py 
-
-Running Server:
-1. Open a new terminal
-2. Activate conda environment
-3. Navigate into code repository (currently it is not dockerized)
-  ```sh
-  $ cd monaifl
-  ```
-4. Run the server@($monaifl/)
-  ```sh
-    python aggregator/coordinator/src/server.py
-  ```
-Running Client:
-1. Open a new terminal
-2. Activate conda environment
-3. Navigate into code repository (currently it is not dockerized)
-  ```sh
-  $ cd monaifl
-  ```
-4. Run the client@($monaifl/)
-  ```sh
-  python trainer/substra/testmonai.py
-  ```
-CAUTION: The server side code does not require any GPU installation but for the client side you must have a CUDA-enabled device to initiate the training. 
-
-<!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/habibcomsats/monaifl/issues) for a list of proposed features (and known issues).
-
+3. Run the command to create the virtuall enviroment and install the dependencies specified in the requirements.txt tile
+   ```sh
+   virtualenv venv && venv/bin/pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
+   ```
+4. Activate the virtuall enviroment by running:
+   ```sh
+   source venv/bin/activate
+   ```
 
 <!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+## 3. Contributing
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create your New Branch (`git checkout -b "branch name"`)
+3. Find a way to fix / make the code run better
+4. Commit your Changes (`git commit -m 'comment describing the change you've made`)
+5. Push to the Branch (`git push origin "branch name"`)
+6. Open a Pull Request
 
 <!-- LICENSE -->
-## License
+## 4. License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License: https://opensource.org/licenses/MIT
 
 <!-- CONTACT -->
-## Contact
-Habib Rehman - [@habibcomsats](https://twitter.com/habibcomsats) - email (habibcomsats@gmail.com or mhrehman@ieee.org)
+## 5. Contact
 
-Project Link: [https://github.com/habibcomsats/monaifl](https://github.com/habibcomsats/monaifl)
-
+Project Link: [https://github.com/domenicosiciliani-digica/monaifl](https://github.com/domenicosiciliani-digica/monaifl)
 
 
 <!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
+## 6. Acknowledgements
 
 * [AMIGO](https://github.com/AmigoLab)
 * [AnswerDigital](https://answerdigital.com/)
