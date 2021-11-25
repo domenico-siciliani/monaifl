@@ -79,7 +79,9 @@
 
 
 <!-- ABOUT THE PROJECT -->
+
 ## 1. About The Project
+
 <p align="left">
 MONAI-FL is planned to be a tool-agnostic federated learning platform for medical imaging applications. We envision the below-mentioned architecture for our code-base, however, please feel free to modify the code-base considering your own application requirements.
 </p>
@@ -103,6 +105,7 @@ Here's a blank template to get started:
 
 
 <!-- GETTING STARTED -->
+
 ## 2. Getting Started
 
 To get a local copy up and running follow these simple steps.
@@ -123,6 +126,7 @@ Following platforms are neccessary to run this project.
    ```sh
    pip install python==3.8
    ```
+
 2. Clone the monaifl repository in your project's directory
    ```sh
    git clone https://github.com/domenicosiciliani-digica/monaifl.git
@@ -133,46 +137,59 @@ Following platforms are neccessary to run this project.
    cd monaifl
    ```
 
-2. Clone the MONAI repository
+4. Clone the MONAI repository
    ```sh
    git clone https://github.com/Project-MONAI/MONAI.git
    ```
-3. Go back to the monaifl directory
+
+5. Go back to the monaifl directory
    ```sh
    cd .. 
    ```
 
-3. Run the command to create the virtuall enviroment and install the dependencies specified in the requirements.txt tile
+6. Run the command to create the virtuall enviroment and install the dependencies specified in the requirements.txt tile
    ```sh
    virtualenv venv && venv/bin/pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
    ```
-4. Activate the virtuall enviroment by running:
+   
+7. Activate the virtuall enviroment by running:
    ```sh
    source venv/bin/activate
    ```
 
 <!-- CONTRIBUTING -->
+
 ## 3. Contributing
 
+
 1. Fork the Project
+
 2. Create your New Branch (`git checkout -b "branch name"`)
+
 3. Find a way to fix / make the code run better
+
 4. Commit your Changes (`git commit -m 'comment describing the change you've made`)
+
 5. Push to the Branch (`git push origin "branch name"`)
+
 6. Open a Pull Request
 
+
 <!-- LICENSE -->
+
 ## 4. License
 
 Distributed under the MIT License: https://opensource.org/licenses/MIT
 
 <!-- CONTACT -->
+
 ## 5. Contact
 
 Project Link: [https://github.com/domenicosiciliani-digica/monaifl](https://github.com/domenicosiciliani-digica/monaifl)
 
 
 <!-- ACKNOWLEDGEMENTS -->
+
 ## 6. Acknowledgements
 
 * [AMIGO](https://github.com/AmigoLab)
