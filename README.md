@@ -80,7 +80,7 @@
 
 <!-- ABOUT THE PROJECT -->
 
-## 1. About The Project
+## About The Project
 
 <p align="left">
 MONAI-FL is planned to be a tool-agnostic federated learning platform for medical imaging applications. We envision the below-mentioned architecture for our code-base, however, please feel free to modify the code-base considering your own application requirements.
@@ -106,7 +106,7 @@ Here's a blank template to get started:
 
 <!-- GETTING STARTED -->
 
-## 2. Getting Started
+## Getting Started
 
 To get a local copy up and running follow these simple steps.
 
@@ -159,7 +159,7 @@ Following platforms are neccessary to run this project.
 
 <!-- CONTRIBUTING -->
 
-## 3. Contributing
+## Contributing
 
 
 1. Fork the Project
@@ -177,20 +177,20 @@ Following platforms are neccessary to run this project.
 
 <!-- LICENSE -->
 
-## 4. License
+## License
 
 Distributed under the MIT License: https://opensource.org/licenses/MIT
 
 <!-- CONTACT -->
 
-## 5. Contact
+## Contact
 
 Project Link: [https://github.com/domenicosiciliani-digica/monaifl](https://github.com/domenicosiciliani-digica/monaifl)
 
 
 <!-- ACKNOWLEDGEMENTS -->
 
-## 6. Acknowledgements
+## Acknowledgements
 
 * [AMIGO](https://github.com/AmigoLab)
 * [AnswerDigital](https://answerdigital.com/)
