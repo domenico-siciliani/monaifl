@@ -127,32 +127,32 @@ Following platforms are neccessary to run this project.
    pip install python==3.8
    ```
 
-2. Clone the monaifl repository in your project's directory
+1. Clone the monaifl repository in your project's directory
    ```sh
    git clone https://github.com/domenicosiciliani-digica/monaifl.git
    ```
 
-3. Go to the monaifl directory
+1. Go to the monaifl directory
    ```sh
    cd monaifl
    ```
 
-4. Clone the MONAI repository
+1. Clone the MONAI repository
    ```sh
    git clone https://github.com/Project-MONAI/MONAI.git
    ```
 
-5. Go back to the monaifl directory
+1. Go back to the monaifl directory
    ```sh
    cd .. 
    ```
 
-6. Run the command to create the virtuall enviroment and install the dependencies specified in the requirements.txt tile
+1. Run the command to create the virtuall enviroment and install the dependencies specified in the requirements.txt tile
    ```sh
    virtualenv venv && venv/bin/pip install -r requirements.txt -f https://download.pytorch.org/whl/cu113/torch_stable.html
    ```
    
-7. Activate the virtuall enviroment by running:
+1. Activate the virtuall enviroment by running:
    ```sh
    source venv/bin/activate
    ```
@@ -164,15 +164,15 @@ Following platforms are neccessary to run this project.
 
 1. Fork the Project
 
-2. Create your New Branch (`git checkout -b "branch name"`)
+1. Create your New Branch (`git checkout -b "branch name"`)
 
-3. Find a way to fix / make the code run better
+1. Find a way to fix / make the code run better
 
-4. Commit your Changes (`git commit -m 'comment describing the change you've made`)
+1. Commit your Changes (`git commit -m 'comment describing the change you've made`)
 
-5. Push to the Branch (`git push origin "branch name"`)
+1. Push to the Branch (`git push origin "branch name"`)
 
-6. Open a Pull Request
+1. Open a Pull Request
 
 
 <!-- LICENSE -->
